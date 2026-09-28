@@ -16,7 +16,11 @@ import wave
 import numpy as np
 
 SR = 48000
-OUT = os.path.expanduser("~/.local/share/omarchy/sounds/phantom-thieves")
+# Renders straight into the live install. Override with PHANTOM_SFX_OUT to
+# render somewhere else (packaging, a checked-in wav/ directory, CI).
+OUT = os.path.expanduser(
+    os.environ.get("PHANTOM_SFX_OUT", "~/.local/share/omarchy/sounds/phantom-thieves")
+)
 
 # D minor, the pitch set these motifs are written from
 D3, F3, A3, C4, D4, F4, A4, C5, D5, F5, A5 = (

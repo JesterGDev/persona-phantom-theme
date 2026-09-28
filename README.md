@@ -17,7 +17,7 @@ cloned menu plugin with sound design and a working Apps section.
 | `theme/` | Colours, `hyprland.lua`, `neovim.lua`, `icons.theme`, shell control/font/launcher/lock/menu/popup TOML, preview |
 | `plugins/menu/` | `dawar.menu` — the menu clone with SFX and a self-contained Apps section |
 | `plugins/notifications/` | `dawar.notifications` — notification plugin, DND-aware sounds |
-| `sfx/` | Generators (`gen_sfx.py` and friends) plus the rendered `.wav` files under `sfx/wav/` |
+| `sfx/` | Generator scripts. The rendered `.wav` files are **not** committed — run `gen_sfx.py` to produce them (see below) |
 | `bin/phantom-thieves-sounds` | Hyprland event → sound daemon |
 | `config/phantom-thieves-sounds.conf` | Daemon toggles and volume |
 | `systemd/` | User unit for the daemon |
@@ -39,9 +39,10 @@ ln -s "$PWD/theme" ~/.config/omarchy/themes/phantom-thieves
 ln -s "$PWD/plugins/menu"      ~/.config/omarchy/plugins/dawar.menu
 ln -s "$PWD/plugins/notifications" ~/.config/omarchy/plugins/dawar.notifications
 
-# sounds
-mkdir -p ~/.local/share/omarchy/sounds
-cp -r "$PWD/sfx/wav" ~/.local/share/omarchy/sounds/phantom-thieves
+# sounds — the .wav files are not committed, so render them.
+# Needs numpy. Writes to ~/.local/share/omarchy/sounds/phantom-thieves.
+# Set PHANTOM_SFX_OUT=/some/dir to render elsewhere.
+(cd sfx && python3 gen_sfx.py)
 
 # daemon
 install -Dm755 bin/phantom-thieves-sounds ~/.local/bin/phantom-thieves-sounds
