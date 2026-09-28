@@ -15,6 +15,7 @@ cloned menu plugin with sound design and a working Apps section.
 | Path | What it is |
 |---|---|
 | `theme/` | Colours, `hyprland.lua`, `neovim.lua`, `icons.theme`, shell control/font/launcher/lock/menu/popup TOML, preview |
+| `theme/fonts/` | Barlow Condensed (SIL OFL 1.1) — the UI display face. The Omarchy shell styles every surface with a single `monospace` fontconfig alias, so one face controls the whole UI; this condensed grotesque is what makes it read as Persona |
 | `plugins/menu/` | `dawar.menu` — the menu clone with SFX and a self-contained Apps section |
 | `plugins/notifications/` | `dawar.notifications` — notification plugin, DND-aware sounds |
 | `sfx/` | Generator scripts. The rendered `.wav` files are **not** committed — run `gen_sfx.py` to produce them (see below) |
@@ -50,6 +51,12 @@ install -Dm644 config/phantom-thieves-sounds.conf ~/.config/phantom-thieves-soun
 install -Dm644 systemd/phantom-thieves-sounds.service \
   ~/.config/systemd/user/phantom-thieves-sounds.service
 systemctl --user enable --now phantom-thieves-sounds.service
+
+# UI font — Barlow Condensed makes the bar/menu/notifications read as P5.
+install -Dm644 theme/fonts/BarlowCondensed/*.ttf \
+  ~/.local/share/fonts/phantom-thieves/
+fc-cache -f >/dev/null
+omarchy font set "Barlow Condensed"
 ```
 
 Then enable the plugins and restart the shell:
