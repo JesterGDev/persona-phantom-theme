@@ -30,6 +30,18 @@ we hold no copyright. If you fork this, replace them: the original
 procedurally generated wallpapers are reproducible from
 `sfx/gen_phantom_thieves.py` and carry no such restriction.
 
+## Screenshots
+
+![Desktop with the Phantom Thieves wallpaper, bar, and boards](screenshots/desktop.jpg)
+
+![Open menu — dawar.menu with SFX, Apps section, and L-bracket chrome](screenshots/menu.jpg)
+
+![Notification popup styling](screenshots/notifications.jpg)
+
+The bar typeset in Barlow Condensed, the theme's display face:
+
+![Bar detail](screenshots/bar.png)
+
 ## Install
 
 ```sh
