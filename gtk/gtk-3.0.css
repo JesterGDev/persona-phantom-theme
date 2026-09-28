@@ -1,0 +1,43 @@
+/* Phantom Thieves — GTK3 overlay. Same palette as the GTK4 file. */
+@define-color window_bg_color #0a0a0a;
+@define-color window_fg_color #f2f2f2;
+@define-color accent_color   #e60012;
+@define-color secondary_color #cfcfcf;
+@define-color borders        #2b0a0e;
+
+* {
+  border-radius: 0;
+  font-family: "Barlow Condensed";
+}
+
+window, .background {
+  background-color: @window_bg_color;
+  color: @window_fg_color;
+}
+
+menu, .menu {
+  background-color: #050505;
+  color: @window_fg_color;
+  border: 1px solid @borders;
+}
+menuitem {
+  padding: 5px 12px;
+}
+menuitem:selected, .context-menu-item:selected {
+  background-color: @accent_color;
+  color: #ffffff;
+}
+menubar {
+  background-color: #050505;
+  color: @window_fg_color;
+}
+
+entry, button, treeview.view, .view {
+  background-color: #101010;
+  color: @window_fg_color;
+  border-color: @borders;
+}
+selection {
+  background-color: @accent_color;
+  color: #ffffff;
+}

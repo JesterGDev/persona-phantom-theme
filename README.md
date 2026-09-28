@@ -22,6 +22,7 @@ cloned menu plugin with sound design and a working Apps section.
 | `bin/phantom-thieves-sounds` | Hyprland event → sound daemon |
 | `config/phantom-thieves-sounds.conf` | Daemon toggles and volume |
 | `systemd/` | User unit for the daemon |
+| `gtk/` | A GTK overlay (GTK3 + GTK4) that themes Nautilus and other GTK apps with the same black/red/Barlow language — square corners, red selection, dark chrome |
 
 Wallpapers are included but **are not ours and carry no license** — they came
 from WallpaperFlare, an aggregator, and the original artists are unknown. See
@@ -32,11 +33,15 @@ procedurally generated wallpapers are reproducible from
 
 ## Screenshots
 
-![Desktop with the Phantom Thieves wallpaper, bar, and boards](screenshots/desktop.jpg)
+AI across different wallpapers from the theme's cycle.
 
-![Open menu — dawar.menu with SFX, Apps section, and L-bracket chrome](screenshots/menu.jpg)
+![Desktop over the P5 E wallpaper — full bar, board palette, no chrome](screenshots/desktop.jpg)
 
-![Notification popup styling](screenshots/notifications.jpg)
+![Open menu over the P5 F wallpaper — dawar.menu with SFX, Apps section, and L-bracket chrome](screenshots/menu.jpg)
+
+![Notification popup over the P5 A wallpaper](screenshots/notifications.jpg)
+
+![Nautilus over the P5 A wallpaper — the GTK overlay: dark chrome, red accent and selection, square corners, Barlow Condensed](screenshots/nautilus.jpg)
 
 The bar typeset in Barlow Condensed, the theme's display face:
 
@@ -68,7 +73,13 @@ systemctl --user enable --now phantom-thieves-sounds.service
 install -Dm644 theme/fonts/BarlowCondensed/*.ttf \
   ~/.local/share/fonts/phantom-thieves/
 fc-cache -f >/dev/null
-omarchy font set "Barlow Condensed"
+omarchy font set "Barlow Condensed SemiBold"
+
+# GTK — themes Nautilus and other GTK apps. Restart Nautilus to apply.
+install -Dm644 gtk/gtk-4.0.css ~/.config/gtk-4.0/gtk.css
+install -Dm644 gtk/gtk-3.0.css ~/.config/gtk-3.0/gtk.css
+install -Dm644 gtk/settings.ini ~/.config/gtk-4.0/settings.ini
+install -Dm644 gtk/settings.ini ~/.config/gtk-3.0/settings.ini
 ```
 
 Then enable the plugins and restart the shell:

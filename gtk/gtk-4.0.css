@@ -1,0 +1,97 @@
+/* Phantom Thieves — GTK4 (libadwaita) overlay.
+ *
+ * Loaded by every GTK4 app via ~/.config/gtk-4.0/gtk.css. Recolors the
+ * palette to the Persona 5 board (black, white, one red), drops rounding to
+ * zero, and pushes the file explorer's chrome. Structural Persona shapes
+ * (L-bracket corners) are a Hyprland/Quickshell trick and do not exist in
+ * GTK4 — here the "square corners + red selection" language stands in for it.
+ */
+
+/* ---- persona palette (libadwaita color variables) ---- */
+@define-color accent_color      #e60012;
+@define-color accent_bg_color   #e60012;
+@define-color accent_fg_color   #ffffff;
+@define-color destructive_color #ff4a52;
+@define-color destructive_bg_color #7d1420;
+
+@define-color window_bg_color   #0a0a0a;
+@define-color window_fg_color   #f2f2f2;
+@define-color view_bg_color     #0a0a0a;
+@define-color view_fg_color     #f2f2f2;
+@define-color headerbar_bg_color      #0d0d0d;
+@define-color headerbar_fg_color      #f2f2f2;
+@define-color headerbar_border_color  #2b0a0e;
+@define-color popup_bg_color          #050505;
+@define-color popup_fg_color          #f2f2f2;
+@define-color card_bg_color           #101010;
+@define-color card_fg_color           #f2f2f2;
+@define-color dialog_bg_color         #0a0a0a;
+@define-color dialog_fg_color         #f2f2f2;
+@define-color sidebar_bg_color        #050505;
+@define-color sidebar_fg_color        #cfcfcf;
+@define-color sidebar_backdrop_color  #0a0a0a;
+
+@define-color subtle_color       #6b6b6b;
+@define-color borders            #2b0a0e;
+
+/* ---- typography: the theme's display face ---- */
+window, dialog, popover, menuitem, button, label, entry {
+  font-family: "Barlow Condensed";
+  font-size: 13px;
+}
+nautilus-window .nautilus-pathbar {
+  font-size: 14px;
+}
+
+/* ---- square corners everywhere (Persona cuts, never rounds) ---- */
+window, dialog, popover > contents, menu, menuitem, entry, button {
+  border-radius: 0;
+}
+
+/* ---- file explorer chrome ---- */
+nautilus-window {
+  background-color: @window_bg_color;
+  color: @window_fg_color;
+}
+nautilus-window .sidebar,
+nautilus-window .navigation-sidebar {
+  background-color: @sidebar_bg_color;
+  color: @sidebar_fg_color;
+}
+nautilus-window .sidebar row:selected,
+nautilus-window .navigation-sidebar row:selected {
+  background-color: @accent_bg_color;
+  color: #ffffff;
+  border-radius: 0;
+}
+nautilus-window .sidebar row:hover {
+  background-color: #1b1b1b;
+}
+nautilus-window .nautilus-floating-bar {
+  background-color: #101010;
+  color: #f2f2f2;
+  border-radius: 0;
+  border: 1px solid #2b0a0e;
+}
+nautilus-window .nautilus-floating-bar button {
+  background-color: @accent_bg_color;
+  color: #ffffff;
+}
+nautilus-window .nautilus-floating-bar button:hover {
+  background-color: #ff2b45;
+}
+
+/* ---- popovers: the persona menus ---- */
+popover > contents {
+  background-color: @popup_bg_color;
+  color: @popup_fg_color;
+  border: 1px solid #2b0a0e;
+}
+popover modelbutton:hover {
+  background-color: @accent_bg_color;
+  color: #ffffff;
+}
+menuitem:selected {
+  background-color: @accent_bg_color;
+  color: #ffffff;
+}
