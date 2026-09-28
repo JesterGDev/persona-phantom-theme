@@ -1,0 +1,6 @@
+[launcher]
+# Two vertical rails instead of a full outline -- the same L-bracket language
+# as the controls, at card scale. Gradients live in the same border token.
+border       = "accent magenta 45deg"
+border-alpha = 1.0
+border-width = "2 0 0 2"

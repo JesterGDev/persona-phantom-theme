@@ -1,0 +1,12 @@
+# Generated audio (regenerate with sfx/gen_sfx.py)
+sfx/wav/
+
+# local state
+*.log
+*.swp
+.DS_Store
+
+# never commit these
+.env
+*.pem
+*.key

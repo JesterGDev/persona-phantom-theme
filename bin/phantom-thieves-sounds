@@ -1,0 +1,328 @@
+#!/usr/bin/env python3
+"""phantom-thieves-sounds -- plays UI sounds on desktop events.
+
+Nothing in Omarchy exposes a workspace-switch or notification hook, so this
+listens to the two sources that do exist and maps them onto a sound set:
+
+  Hyprland IPC  (event socket)  -> workspace switches, hyprlock open/close
+  D-Bus         (session bus)   -> org.freedesktop.Notifications.Notify
+
+Runs as a systemd user service. Every sound is optional and independently
+switchable from the config file, and a rate limiter stops rapid events (a
+keyboard-driven workspace sweep) from stacking into a machine-gun.
+"""
+
+import json
+import os
+import queue
+import random
+import socket
+import subprocess
+import sys
+import threading
+import time
+
+
+SOUND_DIR = os.path.expanduser("~/.local/share/omarchy/sounds/phantom-thieves")
+CONFIG = os.path.expanduser("~/.config/phantom-thieves-sounds.conf")
+LOG = os.path.expanduser("~/.local/state/omarchy/phantom-thieves-sounds.log")
+
+DEFAULTS = {
+    "volume": "0.35",
+    "rate_limit_ms": "90",       # minimum gap between two triggers
+    "workspace": "true",
+    "lock": "true",
+    "unlock": "true",
+    "focus": "false",
+    "menu_open": "true",
+    "menu_close": "true",
+    "player": "pw-play",
+    "debug": "true",
+}
+
+
+def load_config():
+    cfg = dict(DEFAULTS)
+    try:
+        with open(CONFIG) as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, v = line.split("=", 1)
+                cfg[k.strip()] = v.strip().strip('"')
+    except FileNotFoundError:
+        pass
+    return cfg
+
+
+def log(msg):
+    try:
+        os.makedirs(os.path.dirname(LOG), exist_ok=True)
+        with open(LOG, "a") as f:
+            f.write(f"{time.strftime('%H:%M:%S')} {msg}\n")
+    except Exception:
+        pass
+
+
+class Player:
+    """Non-blocking playback with a rate limit and a small voice cap."""
+
+    def __init__(self, cfg):
+        self.dir = SOUND_DIR
+        self.volume = float(cfg["volume"])
+        self.gap = float(cfg["rate_limit_ms"]) / 1000.0
+        self.player = cfg["player"]
+        self.last = 0.0
+        self.lock = threading.Lock()
+        self.live = 0
+        self.debug = cfg.get("debug", "true") == "true"
+
+    VARIANTS = 3
+
+    def resolve(self, name):
+        """Map a base name onto one of its numbered variants.
+
+        Falls back to the unnumbered file when a sound has no variants, so
+        this is safe to call for every sound rather than only the menu ones.
+        The previous pick is remembered per base name and never repeated: pure
+        randomness still replays the same sample back to back often enough to
+        read as a glitch, and an open/close pair landing on the same variant
+        sounds like one sound with a dropout.
+        """
+        if not hasattr(self, "_last_variant"):
+            self._last_variant = {}
+        numbered = f"{name}-{self.VARIANTS}.wav"
+        if not os.path.exists(os.path.join(self.dir, numbered)):
+            return name
+        prev = self._last_variant.get(name)
+        pick = random.randint(1, self.VARIANTS)
+        if pick == prev:
+            pick = pick % self.VARIANTS + 1
+        self._last_variant[name] = pick
+        return f"{name}-{pick}"
+
+    def play(self, name, bypass_rate=False):
+        name = self.resolve(name)
+        path = os.path.join(self.dir, name + ".wav")
+        if not os.path.exists(path):
+            log(f"missing sound: {path}")
+            return
+        now = time.monotonic()
+        with self.lock:
+            if not bypass_rate:
+                if now - self.last < self.gap:
+                    if self.debug:
+                        log(f"rate-limited: {name}")
+                    return
+                self.last = now
+            if self.live >= 4:          # never let voices pile up
+                if self.debug:
+                    log(f"voice-capped: {name}")
+                return
+            self.live += 1
+        if self.debug:
+            log(f"play {name}")
+
+        if self.player == "paplay":
+            # paplay has no --volume flag; it reads the level off the filename
+            cmd = ["paplay", f"{path}:vol={self.volume}"]
+        else:
+            # pw-play has no --stream-name option. Passing an unknown option
+            # makes it exit non-zero *before* playing anything, so the whole
+            # sound is lost rather than merely mislabelled in the mixer.
+            cmd = [self.player, "--volume", str(self.volume), path]
+
+        def run():
+            try:
+                r = subprocess.run(cmd, stdout=subprocess.DEVNULL,
+                                   stderr=subprocess.PIPE, timeout=15)
+                if r.returncode != 0:
+                    err = r.stderr.decode(errors="replace").strip().splitlines()
+                    log(f"playback FAILED {name} (exit {r.returncode})"
+                        + (f": {err[0]}" if err else ""))
+            except Exception as e:
+                log(f"playback failed {name}: {e}")
+            finally:
+                with self.lock:
+                    self.live -= 1
+
+        threading.Thread(target=run, daemon=True).start()
+
+
+class HyprlandListener(threading.Thread):
+    """Reads the Hyprland event socket and pushes sounds onto the queue."""
+
+    def __init__(self, out: queue.Queue, cfg):
+        super().__init__(daemon=True)
+        self.out = out
+        self.cfg = cfg
+        self._stop = threading.Event()
+        self.last_ws = None
+        self.locked = False
+        self.seen_window = False
+        self.started = time.monotonic()
+        self.debug_events = True
+
+    def socket_path(self):
+        base = os.environ.get("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")
+        sig = os.environ.get("HYPRLAND_INSTANCE_SIGNATURE")
+        if not sig:
+            return None
+        return os.path.join(base, "hypr", sig, ".socket2.sock")
+
+    def stop(self):
+        self._stop.set()
+
+    def run(self):
+        while not self._stop.is_set():
+            path = self.socket_path()
+            if not path or not os.path.exists(path):
+                time.sleep(2)
+                continue
+            try:
+                s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                s.connect(path)
+                # .socket2.sock streams events from the moment it is connected;
+                # sending anything here desynchronises the stream.
+                log(f"connected to hyprland events: {path}")
+                self._pump(s)
+            except Exception as e:
+                log(f"hyprland socket error: {e}")
+                time.sleep(2)
+
+    def _pump(self, s):
+        s.settimeout(1.0)
+        buf = b""
+        while not self._stop.is_set():
+            try:
+                chunk = s.recv(8192)
+            except socket.timeout:
+                continue
+            except OSError:
+                break
+            if not chunk:
+                break
+            buf += chunk
+            while b"\n" in buf:
+                line, buf = buf.split(b"\n", 1)
+                self._handle(line)
+        try:
+            s.close()
+        except Exception:
+            pass
+
+    def _handle(self, raw):
+        # Hyprland <=0.5: "event>>{json}". 0.56+: "event>>plain,text,payload"
+        if b">>" in raw:
+            event, _, payload = raw.partition(b">>")
+        elif b"," in raw:
+            event, _, payload = raw.partition(b",")
+        else:
+            return
+        event = event.decode("utf-8", "replace").strip()
+        text = payload.decode("utf-8", "replace").strip()
+
+        if text.startswith("{"):
+            try:
+                fields = list(json.loads(text).values())
+            except Exception:
+                return
+        else:
+            fields = text.split(",")
+
+        if event in ("workspace", "workspacev2"):
+            ws = fields[0] if fields else None
+            if ws is None or ws == "" or ws == self.last_ws:
+                return
+            first = self.last_ws is None
+            self.last_ws = ws
+            if not first and self.cfg.get("workspace") == "true":
+                self.out.put("workspace")
+            return
+
+        if event in ("openlayer", "closelayer"):
+            # The Omarchy menu is a layer-shell surface, so it opens and closes
+            # a layer rather than a window. Watching the namespace means the
+            # menu can sound without editing its root-owned Menu.qml.
+            ns = fields[0] if fields else ""
+            if ns == "omarchy-menu":
+                key = "menu_open" if event == "openlayer" else "menu_close"
+                if self.cfg.get(key, "true") == "true":
+                    self.out.put(key.replace("_", "-"))
+            return
+
+        if event in ("openwindow", "closewindow"):
+            # 0.56: address,workspace,class,title
+            cls = fields[2] if len(fields) > 2 else ""
+            if any(k in cls.lower() for k in ("hyprlock", "swaylock", "gtklock")):
+                if event == "openwindow" and not self.locked:
+                    self.locked = True
+                    if self.cfg.get("lock") == "true":
+                        self.out.put("lock")
+                elif event == "closewindow" and self.locked:
+                    self.locked = False
+                    if self.cfg.get("unlock") == "true":
+                        self.out.put("unlock")
+            elif time.monotonic() - self.started < 3.0:
+                # Grace window at startup: the shell and its bars open a burst
+                # of windows right after a restart and those are not user
+                # actions. Keyed on time rather than "the first window" so the
+                # first window a user actually opens still sounds.
+                self.seen_window = True
+                if self.debug_events:
+                    log(f"window suppressed during startup grace ({event})")
+            else:
+                self.seen_window = True
+                key = "window_open" if event == "openwindow" else "window_close"
+                if self.cfg.get(key, "true") == "true":
+                    self.out.put(key.replace("_", "-"))
+                elif self.debug_events:
+                    log(f"window event sample ({event}): {text[:120]}")
+            return
+
+        if event == "focusedwindow" and self.cfg.get("focus") == "true":
+            if fields and fields[0] not in ("", "0x0", "0"):
+                self.out.put("workspace")
+
+
+def main():
+    cfg = load_config()
+    out = queue.Queue()
+    player = Player(cfg)
+
+    def drain():
+        while True:
+            name = out.get()
+            player.play(name)
+
+    threading.Thread(target=drain, daemon=True).start()
+
+    listener = HyprlandListener(out, cfg)
+    listener.start()
+
+    def boot():
+        time.sleep(1.2)
+        player.play("boot", bypass_rate=True)
+    threading.Thread(target=boot, daemon=True).start()
+
+    # Notifications are NOT handled here. `Notify` is a method call rather
+    # than a signal, so catching one means owning the well-known name -- and
+    # the real server (quickshell) does not allow replacement. The user's own
+    # notification plugin plays notify.wav instead, which is both native and
+    # free of the interception risk this would carry.
+    #
+    # No GLib main loop is needed: everything here is a socket read plus a
+    # subprocess, and a thread's own loop runs forever. Keeping a GLib loop
+    # alive would only add a failure mode.
+    try:
+        while True:
+            time.sleep(3600)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        listener.stop()
+
+
+if __name__ == "__main__":
+    sys.exit(main())

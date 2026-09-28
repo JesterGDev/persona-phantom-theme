@@ -1,0 +1,30 @@
+[controls]
+# Persona 5 cuts its corners instead of rounding them. A border width may be
+# one of N, "Y X", "T X B" or "T R B L" -- which sides are listed is which
+# corner is drawn, so an uneven spec renders as an L-bracket rather than a
+# closed rectangle. Idle chrome is a single bottom-left bracket in accent;
+# hover grows a third side, focus jumps to the opposite corner in neon, and
+# selected thickens where idle started.
+
+normal-border        = "accent"
+normal-border-width  = "0 0 2 2"
+normal-fill-alpha    = 0.03
+normal-border-alpha  = 0.50
+
+hover-cursor-border        = "accent"
+hover-cursor-border-width  = "0 2 2 2"
+hover-cursor-fill-alpha    = 0.10
+hover-cursor-border-alpha  = 0.85
+
+focus-border        = "accent gold 45deg"
+focus-border-width  = "2 2 0 0"
+focus-fill-alpha    = 0.12
+focus-border-alpha  = 1.0
+
+selected-border        = "accent magenta 45deg"
+selected-border-width  = "0 0 3 3"
+selected-fill-alpha    = 0.16
+selected-border-alpha  = 1.0
+
+pressed-fill-alpha   = 0.24
+selection-fill-alpha = 0.35

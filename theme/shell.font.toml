@@ -1,0 +1,13 @@
+[font]
+# Replaces the whole [font] section, so base-size is redeclared here.
+#
+# Persona 5 sets its interface in large, hard-edged display type and keeps
+# body copy small by comparison. base-size stays at 12 on purpose: the bar and
+# every qs.Ui component scale their dimensions off it, so raising it would
+# inflate the bar. The emphasis tokens are pushed instead.
+base-size = 12
+subtitle      = 13
+title         = 15
+heading       = 19
+display       = 30
+display-large = 36

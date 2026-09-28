@@ -1,0 +1,40 @@
+mode = "dark"
+
+# Persona 5 is black, white and one screaming red. Everything else in the
+# ANSI ramp is a Wild Card suit colour -- Panther pink, Fox gold, Oracle green,
+# Skull aqua -- kept muted and jewel-toned so the red never has competition.
+accent = "#e60012"
+selection = "#2b0a0e"
+muted = "#7d3841"
+
+background = "#0a0a0a"
+dark_background = "#050505"
+darker_background = "#000000"
+lighter_background = "#1b1b1b"
+
+foreground = "#f2f2f2"
+dark_foreground = "#5c5c5c"
+light_foreground = "#cfcfcf"
+bright_foreground = "#ffffff"
+
+hyprland_active_border = "accent magenta 45deg"
+hyprland_inactive_border = "muted"
+active_border_color = "#e60012"
+active_tab_background = "#ff5c8a"
+
+red = "#e60012"
+orange = "#ff7a1a"
+yellow = "#ffc72c"
+green = "#6fbf6b"
+cyan = "#4ec9c9"
+blue = "#5f72d8"
+magenta = "#ff5c8a"
+brown = "#9c6b52"
+
+bright_red = "#ff4a52"
+bright_orange = "#ff9c4a"
+bright_yellow = "#ffe27a"
+bright_green = "#9ddd99"
+bright_cyan = "#8adada"
+bright_blue = "#8290e8"
+bright_magenta = "#ff9ec0"

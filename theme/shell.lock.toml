@@ -1,0 +1,13 @@
+[lock]
+# The lock screen is the one surface where the phantom-thief red is loudest:
+# a thick bottom-left bracket in the active-border gradient, no rounding.
+border           = "hyprland.active-border"
+border-width     = "0 0 3 3"
+border-active    = "hyprland.active-border"
+border-active-width = "0 0 3 3"
+border-error     = "red"
+border-error-width  = "0 0 3 3"
+border-alpha     = 1.0
+background-alpha = 0.85
+selection        = "accent"
+selection-alpha  = 0.45

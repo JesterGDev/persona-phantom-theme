@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "dawar.menu",
+  "name": "Phantom Thieves Menu",
+  "version": "1.0.0",
+  "author": "dawar",
+  "description": "Omarchy menu with a navigation tick sound",
+  "kinds": [
+    "menu",
+    "bar-widget"
+  ],
+  "keepLoaded": true,
+  "entryPoints": {
+    "menu": "Menu.qml",
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "Phantom Thieves menu",
+    "description": "Launches the menu",
+    "category": "Compositor",
+    "allowMultiple": false
+  },
+  "omarchy": {
+    "clonedFrom": "omarchy.menu"
+  }
+}

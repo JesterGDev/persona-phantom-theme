@@ -1,0 +1,17 @@
+[Unit]
+Description=Phantom Thieves UI sounds
+Documentation=file:%h/.local/bin/phantom-thieves-sounds
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/phantom-thieves-sounds
+Restart=on-failure
+RestartSec=2
+# HYPRLAND_INSTANCE_SIGNATURE is set by Hyprland itself; the fallback lets the
+# socket lookup resolve it if the service is started outside the session.
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=graphical-session.target
