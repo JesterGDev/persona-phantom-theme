@@ -5,6 +5,13 @@
 # body copy small by comparison. base-size stays at 12 on purpose: the bar and
 # every qs.Ui component scale their dimensions off it, so raising it would
 # inflate the bar. The emphasis tokens are pushed instead.
+
+# Barlow Condensed is narrower than the stock face, so at the same pixel size
+# the bar reads a size smaller. Body and caption are pinned up a step only -
+# base-size is untouched, so the bar's dimensions (which scale with
+# base-size) stay exactly where they are.
+body          = 14
+caption       = 12
 base-size = 12
 subtitle      = 13
 title         = 15
